@@ -80,7 +80,7 @@ If you configure every 5 minutes poll against the device 'rtr',
 
 5. Push "Pull Data" button below the list.
 
-6. You will find the table "nwUsagi WDC (<device name>)".
+6. You will find the table "nwUsagi WDC (&lt;device name&gt;)".
 
 7. Press "Sheet 1" bottom of the window.
 
