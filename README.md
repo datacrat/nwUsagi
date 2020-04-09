@@ -1,6 +1,6 @@
 # nwUsagi
 nwUsagi is a simple script set to import network usage data into Tableau.
-<img width="1792" alt="ScreenShot 2020-04-09 22 37 04" src="https://user-images.githubusercontent.com/62040535/78901268-0af84980-7ab3-11ea-9304-fd825afe67ae.png">
+<img width="1792" alt="ScreenShot 2020-04-09 22 37 04" src="https://user-images.githubusercontent.com/62040535/78914726-cc1fbf00-7ac5-11ea-973c-8bde0e41ca9b.png">
 Fig.1: An example of network usage graph using nwUsagi
 
 # Description
