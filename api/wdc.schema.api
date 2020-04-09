@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# wdc.schema.api
+#
+# (c) 2020 datacrat
+
+# Load library shell
+NWUBASE=/var/lib/nwusagi
+NWULIBSH=${NWUBASE}/bin/nwulib.sh
+if [ ! -f ${NWULIBSH} ]; then
+    echo "${NWULIBSH} is not accessible. Exiting." >&2
+    exit 1
+fi
+. ${NWULIBSH}
+#
+
+# if "--debug" is specified, this script reads the POST content from stdin
+if [ $1 = "--debug" ]; then
+    DEBUG=1
+    PERROR "Enabled debug. Reading POST content from stdin."
+fi
+
+mkdir ${WORKDIR}
+if [ $? -ne 0 ]; then
+    PERROR "Could not create ${WORKDIR}. Exiting."
+    exit 1
+fi
+
+if [ -z "${DEBUG}" ]; then
+    dd bs=${CONTENT_LENGTH} > ${WORKDIR}/request.post
+else
+    cat > ${WORKDIR}/request.post
+fi
+
+device=$(jq -r '.device' ${WORKDIR}/request.post)
+if [ $? -ne 0 ]; then
+    PERROR "jq failed. Exiting."
+    rm -rf ${WORKDIR}
+    exit 1
+fi
+
+targetip=$(awk -F '\t' -v devname=${device} '{if ($1==devname) print $2}' ${DEVLISTFILE})
+community=$(awk -F '\t' -v devname=${device} '{if ($1==devname) print $3}' ${DEVLISTFILE})
+if [ -z "${targetip}" ]; then
+    PERROR "Coudn't find the entry: ${device}. Exiting."
+    exit 1
+fi
+${NWUBASE}/bin/nwuHead.sh ${community} ${targetip} > ${WORKDIR}/header
+if [ $? -ne 0 ]; then
+    PERROR "${NWUBASE}/bin/nwuHead.sh failed. Check if the device \"${device}\" is correct."
+    exit 1
+fi
+
+# Tableau tableId/tableAlias
+tableAlias=${device}
+tableId=$(echo ${tableAlias} | sed 's/\.//g') # Need to eliminate '.'
+
+cat <<EOF > ${WORKDIR}/res.json
+{
+    "id": "${tableId}",
+    "alias": "${tableAlias}",
+    "columns": [ 
+EOF
+
+cat ${WORKDIR}/header | awk -F '\t' '
+NR==1 {
+  print "       { \"id\": \"col1\", \"alias\": \"" $1 "\", \"dataType\": 2 }";
+  for (i=2; i<=NF; i++) {
+    print "      ,{ \"id\": \"col" i "\", \"alias\": \"" $i "\", \"dataType\": 5 }";
+  }
+}
+' >> ${WORKDIR}/res.json
+
+cat <<EOF >> ${WORKDIR}/res.json
+    ]
+}
+EOF
+
+echo "Status: 200 OK"
+echo "Content-Type: application/json; charset=utf-8"
+echo ""
+cat ${WORKDIR}/res.json
+
+rm -rf ${WORKDIR}
+
+# bottom of file

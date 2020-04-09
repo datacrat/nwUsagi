@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# wdc.data.api
+#
+# (c) 2020 datacrat
+
+# Load library shell
+NWUBASE=/var/lib/nwusagi
+NWULIBSH=${NWUBASE}/bin/nwulib.sh
+if [ ! -f ${NWULIBSH} ]; then
+    echo "${NWULIBSH} is not accessible. Exiting." >&2
+    exit 1
+fi
+. ${NWULIBSH}
+#
+
+# if "--debug" is specified, this script reads the POST content from stdin
+if [ $1 = "--debug" ]; then
+    DEBUG=1
+    PERROR "Enabled debug. Reading POST content from stdin."
+fi
+
+mkdir ${WORKDIR}
+if [ $? -ne 0 ]; then
+    PERROR "Could not create ${WORKDIR}. Exiting."
+    exit 1
+fi
+
+if [ -z "${DEBUG}" ]; then
+    dd bs=${CONTENT_LENGTH} > ${WORKDIR}/request.post
+else
+    cat > ${WORKDIR}/request.post
+fi
+
+device=$(jq -r '.device' ${WORKDIR}/request.post)
+if [ $? -ne 0 ]; then
+    PERROR "jq failed. Exiting."
+    rm -rf ${WORKDIR}
+    exit 1
+fi
+
+histFile=${LIVEDATADIR}/${device}
+
+if [ ! -r ${histFile} ]; then
+    PERROR "Cannot find data for the device \"${device}\". Exiting."
+    rm -rf ${WORKDIR}
+    exit 1
+fi
+
+compcalc=0
+while [ ${compcalc} -eq 0 ]
+do
+    flock -w .01 ${histFile} awk -F '\t' '{ OFMT="%.0f" }
+
+NR==1 {
+  ts = $1;
+  for (i=2;i<=NF;i++) { v[i]=$i; }
+}
+
+NR>1  {
+  printf "%d", $1;
+  for (i=2; i<=NF; i++) {
+    if ($i < v[i]) delta = $i + 4294967296 - v[i];
+    else delta = $i - v[i];
+    printf "\t%.0f", delta*8/($1-ts); v[i] = $i;
+  }
+  printf "\n";
+  ts = $1;
+}' ${histFile} > ${WORKDIR}/bwraw
+    if [ $? -eq 0 ]; then
+	compcalc=1
+    fi
+done
+
+awk -F '\t' '
+BEGIN { print "{ \"data\": ["; }
+
+NR==1 {
+  printf "{ \"col1\": \"%s\"", strftime("%Y-%m-%d %H:%M", $1);
+  for (i=2; i<=NF; i++) {
+    printf ", \"col%d\": %d", i, $i;
+  }
+  printf "}";
+}
+
+NR>1 {
+  printf ",\n{ \"col1\": \"%s\"", strftime("%Y-%m-%d %H:%M", $1);
+  for (i=2; i<=NF; i++) {
+    printf ", \"col%d\": %d", i, $i;
+  }
+  printf "}";
+}
+
+END { print "\n]\n }" }
+' ${WORKDIR}/bwraw > ${WORKDIR}/bw.json
+
+echo "Status: 200 OK"
+echo "Content-Type: application/json; charset=utf-8"
+echo ""
+cat ${WORKDIR}/bw.json
+
+rm -rf ${WORKDIR}
+
+# bottom of file

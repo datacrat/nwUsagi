@@ -1,0 +1,5 @@
+#devicename[TAB]ip[TAB]community
+c1841	10.0.1.254	nkintraRO
+diningsw	10.0.1.252	nkintraRO
+livingsw	10.0.1.251	nkintraRO
+wagner	10.0.1.246	nkintraRO
