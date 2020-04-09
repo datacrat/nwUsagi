@@ -74,7 +74,7 @@ If you configure every 5 minutes poll against the device 'rtr',
 
 2. In "Connect" pane, select "Web Data Connector" in "To a Server" section.
 
-3. Put "http(s)://<Your server's addr/FQDN>/nwusagi/wdc.html?device=<device name>".
+3. Put "http(s)://<Your server's addr/FQDN>/nwusagi/wdc.html?device=&lt;device name&gt;".
 
 4. You will see the list of columns. The 1st column is always Timestamp. The rest are [IN] and [OUT] of all the interfaces of the device.
 
