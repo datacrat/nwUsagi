@@ -11,7 +11,7 @@ Today, we have many good visualization solutions.
 Tableau is one of the most sprendid tools, which has many beautiful easy-to-use graph templates and has dashboard to present data in effective ways.
 It is a commercial product, but Tableau provides [Tableau Public](https://public.tableau.com/) for free.
 
-nwUsage provides the way to produce network usage graphs in Tableau.
+nwUsagi provides the way to produce network usage graphs in Tableau.
 It polls the usage data from network devices in the same way as MRTG and present the data in Tableau in much more beautiful and flexible forms.
 
 # Mechanism
@@ -22,12 +22,12 @@ It polls usage data from network devices using SNMP, stores the history data and
 Fig.2: nwUsagi diagram
 
 # Prerequisites
-- Any UNIX variants with
+- Any UNIX variants (Tested in CentOS7)
   - bash
   - net-snmp
   - apache 2.4+
   - jq
-(Tested in CentOS7)
+  - SELinux should be disabled
 - The monitored network device should be able to be polled using SNMP
 
 # Installation
@@ -54,7 +54,7 @@ The most straightforward way is 1) to make the user belongs to the same group as
 and 2) `chmod -R g+w /var/lib/nwusagi`
 
 6. Edit `conf/devices` file.
-If you would like to monitor a device whose name is 'rtr',
+For example, if you would like to monitor a device whose name is 'rtr',
 whose IP address is '192.168.1.254'
 and whose SNMP (read) community is 'mypublic",
 `echo -e "rtr\t192.168.1.254\tmypublic" >> /var/lib/nwusagi/conf/devices` will do.
@@ -70,11 +70,11 @@ If you configure every 5 minutes poll against the device 'rtr',
 
 # How to pull data into Tableau
 
-1. Run Tableau Desktop (or Tableau Public)
+1. Launch Tableau Desktop (or Tableau Public)
 
 2. In "Connect" pane, select "Web Data Connector" in "To a Server" section.
 
-3. Put "http(s)://<Your server's addr/FQDN>/nwusagi/wdc.html?device=&lt;device name&gt;".
+3. Put "http(s)://&lt;Your server's addr/FQDN&gt;/nwusagi/wdc.html?device=&lt;device name&gt;".
 
 4. You will see the list of columns. The 1st column is always Timestamp. The rest are [IN] and [OUT] of all the interfaces of the device.
 
