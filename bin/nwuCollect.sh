@@ -53,31 +53,31 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-ifInOctets=1.3.6.1.2.1.2.2.1.10
+ifHCInOctets=1.3.6.1.2.1.31.1.1.1.6
 for idx in $(cat ${WORKDIR}/ifIndexList)
 do
-    ${SNMPGET} -OQ -Ov -v2c -c ${community} ${targetip} ${ifInOctets}.${idx} >> ${WORKDIR}/ifInOctets
+    ${SNMPGET} -OQ -Ov -v2c -c ${community} ${targetip} ${ifHCInOctets}.${idx} >> ${WORKDIR}/ifHCInOctets
     if [ $? -ne 0 ]; then
-	PERROR "Could not poll ifInOctets for ${idx}. Exiting."
+	PERROR "Could not poll ifHCInOctets for ${idx}. Exiting."
 	rm -rf ${WORKDIR}
 	exit 1
     fi
 done
 
-ifOutOctets=1.3.6.1.2.1.2.2.1.16
+ifHCOutOctets=1.3.6.1.2.1.31.1.1.1.10
 for idx in $(cat ${WORKDIR}/ifIndexList)
 do
-    ${SNMPGET} -OQ -Ov -v2c -c ${community} ${targetip} ${ifOutOctets}.${idx} >> ${WORKDIR}/ifOutOctets
+    ${SNMPGET} -OQ -Ov -v2c -c ${community} ${targetip} ${ifHCOutOctets}.${idx} >> ${WORKDIR}/ifHCOutOctets
     if [ $? -ne 0 ]; then
-	PERROR "Could not poll ifOutOctets for ${idx}. Exiting."
+	PERROR "Could not poll ifHCOutOctets for ${idx}. Exiting."
 	rm -rf ${WORKDIR}
 	exit 1
     fi
 done
 
 echo -n "${EPOCH}"
-awk '{printf "\t%s", $0}' ${WORKDIR}/ifInOctets
-awk '{printf "\t%s", $0}' ${WORKDIR}/ifOutOctets
+awk '{printf "\t%s", $0}' ${WORKDIR}/ifHCInOctets
+awk '{printf "\t%s", $0}' ${WORKDIR}/ifHCOutOctets
 echo
 
 rm -rf ${WORKDIR}

@@ -50,23 +50,30 @@ fi
 compcalc=0
 while [ ${compcalc} -eq 0 ]
 do
-    flock -w .01 ${histFile} awk -F '\t' '{ OFMT="%.0f" }
-
-NR==1 {
-  ts = $1;
-  for (i=2;i<=NF;i++) { v[i]=$i; }
-}
-
-NR>1  {
-  printf "%d", $1;
-  for (i=2; i<=NF; i++) {
-    if ($i < v[i]) delta = $i + 4294967296 - v[i];
-    else delta = $i - v[i];
-    printf "\t%.0f", delta*8/($1-ts); v[i] = $i;
-  }
-  printf "\n";
-  ts = $1;
-}' ${histFile} > ${WORKDIR}/bwraw
+    flock -w .01 ${histFile} python2 -c '
+import sys
+args = sys.argv
+d = open(args[1])
+ln = 0
+for l in d:
+ if (ln == 0):
+  cur = l.split("\t")
+  nf = len(cur)
+ else:
+  cur = l.split("\t")
+  sys.stdout.write(cur[0])
+  deltat = int(cur[0]) - int(prev[0])
+  for i in range(1,nf):
+   try:
+    delta = int(cur[i]) - int(prev[i])
+   except ValueError:
+    delta = 0
+   sys.stdout.write("\t{}".format(delta/deltat*8))
+  print
+ prev = cur
+ ln += 1
+d.close()
+' ${histFile} > ${WORKDIR}/bwraw
     if [ $? -eq 0 ]; then
 	compcalc=1
     fi
